@@ -1,0 +1,104 @@
+# EchoPhase with Docker Compose: server, webapp, Postgres, ScyllaDB, Valkey.
+#
+#   cp .env.example .env     # set the passwords
+#   docker compose up -d     # then http://localhost:8080
+#
+# The same images and settings as the Helm chart. Only the webapp is published,
+# on 127.0.0.1 (set WEBAPP_PORT / WEBAPP_BIND to change); it proxies /api and
+# /gateway to the server.
+name: echophase
+
+x-server-env: &server-env
+  ASPNETCORE_ENVIRONMENT: Production
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: ${POSTGRES_USER:-echophase}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+  POSTGRES_DB: ${POSTGRES_DB:-echophase}
+  VALKEY_HOST: valkey
+  VALKEY_PORT: "6379"
+  VALKEY_PASSWORD: ${VALKEY_PASSWORD:?set VALKEY_PASSWORD in .env}
+  SCYLLA_CLUSTER_NAME: echophase
+  SCYLLA_CONTACT_POINT: scylla
+  SCYLLA_SEEDS: scylla
+  SCYLLA_AUTO_BOOTSTRAP: "1"
+  SCYLLA_KEYSPACE: echophase
+  SCYLLA_AUTO_CREATE_KEYSPACE: "true"
+  SCYLLA_USERNAME: ""
+  SCYLLA_PASSWORD: ""
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-echophase}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-echophase}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:latest
+    restart: unless-stopped
+    command: ["valkey-server", "--requirepass", "${VALKEY_PASSWORD:?set VALKEY_PASSWORD in .env}", "--appendonly", "yes"]
+    volumes:
+      - valkey:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"${VALKEY_PASSWORD}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  scylla:
+    image: scylladb/scylla:latest
+    restart: unless-stopped
+    command: ["--cluster-name=echophase", "--smp=1", "--memory=${SCYLLA_MEMORY:-1G}", "--overprovisioned=1", "--developer-mode=1"]
+    volumes:
+      - scylla:/var/lib/scylla
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT now() FROM system.local' >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  # EF migrations, then exits; the server starts after it succeeded.
+  migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.1.0}
+    command: ["migrate"]
+    environment: *server-env
+    depends_on:
+      postgres: { condition: service_healthy }
+      scylla: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+
+  server:
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.1.0}
+    restart: unless-stopped
+    environment: *server-env
+    volumes:
+      - server-logs:/app/Logs
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  webapp:
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${WEBAPP_REPOSITORY:-webapp}:${ECHOPHASE_VERSION:-0.1.0}
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: server:8080
+    ports:
+      - "${WEBAPP_BIND:-127.0.0.1}:${WEBAPP_PORT:-8080}:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres:
+  valkey:
+  scylla:
+  server-logs:

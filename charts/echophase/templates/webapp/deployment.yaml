@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: "{{ .Values.imageRegistry }}/{{ .Values.webapp.image.repository }}:{{ .Values.webapp.image.tag }}"
-        imagePullPolicy: {{ include "echophase.appImagePullPolicy" .Values.webapp.image }}
+        image: {{ include "echophase.image" (list $ .Values.webapp.image) | quote }}
+        imagePullPolicy: {{ include "echophase.appImagePullPolicy" (list $ .Values.webapp.image) }}
         env:
         # The webapp's nginx proxies /api and /gateway here.
         - name: API_UPSTREAM

@@ -56,10 +56,21 @@ Image pull policy
 {{- end }}
 
 {{/*
-Pull policy of one of our images (pass its .image values): the explicit
-pullPolicy if set, else Always for the moving "latest" tag and IfNotPresent
-for any other tag (docker:publish pushes an immutable tag per build).
+Image of one of our components: (list $ .Values.<component>.image).
+The tag defaults to the chart's appVersion, so a chart release pins the
+images it was released with.
+*/}}
+{{- define "echophase.image" -}}
+{{- $root := index . 0 }}{{- $img := index . 1 -}}
+{{- printf "%s/%s:%s" $root.Values.imageRegistry $img.repository (toString ($img.tag | default $root.Chart.AppVersion)) }}
+{{- end }}
+
+{{/*
+Pull policy of one of our images: (list $ .Values.<component>.image). The
+explicit pullPolicy if set, else Always for the moving "latest" tag and
+IfNotPresent for any other (immutable) tag.
 */}}
 {{- define "echophase.appImagePullPolicy" -}}
-{{- .pullPolicy | default (ternary "Always" "IfNotPresent" (eq (toString .tag) "latest")) }}
+{{- $root := index . 0 }}{{- $img := index . 1 -}}
+{{- $img.pullPolicy | default (ternary "Always" "IfNotPresent" (eq (toString ($img.tag | default $root.Chart.AppVersion)) "latest")) }}
 {{- end }}

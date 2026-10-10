@@ -60,8 +60,8 @@ spec:
           echo "Valkey is ready!"
       {{- if .Values.migrate.enabled }}
       - name: migrate
-        image: "{{ .Values.imageRegistry }}/{{ .Values.migrate.image.repository }}:{{ .Values.migrate.image.tag }}"
-        imagePullPolicy: {{ include "echophase.appImagePullPolicy" .Values.migrate.image }}
+        image: {{ include "echophase.image" (list $ .Values.migrate.image) | quote }}
+        imagePullPolicy: {{ include "echophase.appImagePullPolicy" (list $ .Values.migrate.image) }}
         args: ["migrate"]
         envFrom:
         - configMapRef:
@@ -73,8 +73,8 @@ spec:
       {{- end }}
       containers:
       - name: server
-        image: "{{ .Values.imageRegistry }}/{{ .Values.echophase.image.repository }}:{{ .Values.echophase.image.tag }}"
-        imagePullPolicy: {{ include "echophase.appImagePullPolicy" .Values.echophase.image }}
+        image: {{ include "echophase.image" (list $ .Values.echophase.image) | quote }}
+        imagePullPolicy: {{ include "echophase.appImagePullPolicy" (list $ .Values.echophase.image) }}
         # Keep serving while the pod is taken out of the Service's endpoints;
         # without the pause, requests routed to it in that window time out.
         lifecycle:

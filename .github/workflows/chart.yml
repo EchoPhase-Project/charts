@@ -1,0 +1,46 @@
+name: Chart
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up tools
+        uses: jdx/mise-action@v5
+
+      - name: Lint
+        run: |
+          helm lint charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
+          helm template echophase charts/echophase \
+            --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x > /dev/null
+
+      # A tag vX.Y.Z publishes oci://ghcr.io/echophase-project/charts/echophase:X.Y.Z.
+      # The tag must match Chart.yaml's version, so a published version always
+      # equals the chart in that commit.
+      - name: Publish
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          chart_version=$(awk '/^version:/{print $2}' charts/echophase/Chart.yaml)
+          if [ "$version" != "$chart_version" ]; then
+            echo "tag $GITHUB_REF_NAME does not match Chart.yaml version $chart_version" >&2
+            exit 1
+          fi
+          echo "$GH_TOKEN" | helm registry login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          helm package charts/echophase --destination dist
+          helm push "dist/echophase-$version.tgz" oci://ghcr.io/echophase-project/charts

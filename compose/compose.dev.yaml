@@ -1,0 +1,11 @@
+# Backing services for working on the server with `dotnet run`:
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d postgres valkey scylla
+# Publishes their ports on 127.0.0.1 only; point the server at localhost
+# (POSTGRES_HOST=localhost, VALKEY_HOST=localhost, SCYLLA_CONTACT_POINT=localhost).
+services:
+  postgres:
+    ports: ["127.0.0.1:5432:5432"]
+  valkey:
+    ports: ["127.0.0.1:6379:6379"]
+  scylla:
+    ports: ["127.0.0.1:9042:9042"]

@@ -1,0 +1,49 @@
+# EchoPhase charts
+
+Ways to run [EchoPhase](https://github.com/EchoPhase-Project/server) yourself.
+
+## Kubernetes (Helm)
+
+The chart is published as an OCI package:
+
+```sh
+helm install echophase oci://ghcr.io/echophase-project/charts/echophase \
+  --version 0.1.0 --namespace echophase --create-namespace \
+  --set secrets.POSTGRES_PASSWORD=change-me \
+  --set secrets.VALKEY_PASSWORD=change-me
+```
+
+It runs the server and webapp images from `ghcr.io/echophase-project` at the
+chart's `appVersion`, plus Postgres, ScyllaDB and Valkey. Passwords have no
+defaults; keep them in a values file of your own (see
+`charts/echophase/secrets.example.yaml`) or a secret manager. Other settings:
+`charts/echophase/values.yaml` (ingress host and controller, resources,
+persistence, rate limits).
+
+To run images from another registry (your own builds), set `imageRegistry`
+and the components' `image.repository` / `image.tag`.
+
+## Docker Compose
+
+Without Kubernetes, `compose/` runs the same images on one machine:
+
+```sh
+cd compose
+cp .env.example .env        # set POSTGRES_PASSWORD and VALKEY_PASSWORD
+docker compose up -d        # then http://localhost:8080
+```
+
+Only the webapp is published, on 127.0.0.1 (`WEBAPP_BIND`, `WEBAPP_PORT` in
+`.env`); it proxies the API to the server. `ECHOPHASE_VERSION` picks the image
+tag. For working on the server locally, `compose.dev.yaml` also publishes the
+databases on 127.0.0.1:
+
+```sh
+docker compose -f compose.yaml -f compose.dev.yaml up -d postgres valkey scylla
+```
+
+## Releasing the chart
+
+Bump `version` (and `appVersion` when it should pin newer images) in
+`charts/echophase/Chart.yaml`, commit, then tag `vX.Y.Z` with the same version:
+GitHub Actions publishes it to `oci://ghcr.io/echophase-project/charts`.

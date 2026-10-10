@@ -2,13 +2,18 @@ apiVersion: v2
 name: echophase
 description: EchoPhase application Helm chart
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+version: 0.1.0
+# Image tag of server and webapp unless values set one.
+appVersion: "0.1.0"
 keywords:
   - echophase
   - postgres
   - scylla
   - valkey
+home: https://github.com/EchoPhase-Project/charts
+sources:
+  - https://github.com/EchoPhase-Project/server
+  - https://github.com/EchoPhase-Project/webapp
 maintainers:
-  - name: Dusty
-    email: extremal.user@gmail.com
+  - name: EchoPhase-Project
+    url: https://github.com/EchoPhase-Project

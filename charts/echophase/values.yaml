@@ -4,13 +4,15 @@ global:
   storageClass: ""
 
 # Registry configuration
-imageRegistry: localhost:30500
+# Where the server and webapp images come from (self-hosting: the published ones).
+imageRegistry: ghcr.io/echophase-project
 
 # EchoPhase Backend
 echophase:
   image:
-    repository: echophase/server
-    tag: latest
+    repository: server
+    # Empty: the chart's appVersion.
+    tag: ""
     # Empty: Always for "latest", IfNotPresent for other (immutable) tags.
     pullPolicy: ""
 
@@ -65,8 +67,9 @@ echophase:
 # EchoPhase webapp (SolidJS + nginx)
 webapp:
   image:
-    repository: echophase/webapp
-    tag: latest
+    repository: webapp
+    # Empty: the chart's appVersion.
+    tag: ""
     # Empty: Always for "latest", IfNotPresent for other (immutable) tags.
     pullPolicy: ""
 
@@ -113,8 +116,9 @@ webapp:
 migrate:
   enabled: true
   image:
-    repository: echophase/server
-    tag: latest
+    repository: server
+    # Empty: the chart's appVersion.
+    tag: ""
     # Empty: Always for "latest", IfNotPresent for other (immutable) tags.
     pullPolicy: ""
 
@@ -244,6 +248,8 @@ secrets:
   POSTGRES_DB: echophase
   # POSTGRES_PASSWORD: required
   # VALKEY_PASSWORD: required
-  SCYLLA_USERNAME: echophase
+  # Empty: the chart runs Scylla without authentication (the server refuses
+  # a username without a password).
+  SCYLLA_USERNAME: ""
   # Scylla runs without authentication here, so this may stay empty.
   SCYLLA_PASSWORD: ""
