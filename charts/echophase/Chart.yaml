@@ -17,3 +17,5 @@ sources:
 maintainers:
   - name: EchoPhase-Project
     url: https://github.com/EchoPhase-Project
+annotations:
+  artifacthub.io/license: BSD-3-Clause
