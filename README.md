@@ -47,3 +47,15 @@ docker compose -f compose.yaml -f compose.dev.yaml up -d postgres valkey scylla
 Bump `version` (and `appVersion` when it should pin newer images) in
 `charts/echophase/Chart.yaml`, commit, then tag `vX.Y.Z` with the same version:
 GitHub Actions publishes it to `oci://ghcr.io/echophase-project/charts`.
+
+## Verifying the images
+
+Releases (from version 0.2.0) carry build provenance: a signed statement of the
+commit and workflow each image and chart was built from, kept next to them in
+GHCR. Check one with the GitHub CLI before deploying it:
+
+```bash
+gh attestation verify oci://ghcr.io/echophase-project/server:<version> --owner EchoPhase-Project
+gh attestation verify oci://ghcr.io/echophase-project/webapp:<version> --owner EchoPhase-Project
+gh attestation verify oci://ghcr.io/echophase-project/charts/echophase:<version> --owner EchoPhase-Project
+```
