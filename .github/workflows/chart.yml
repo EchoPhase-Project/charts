@@ -8,7 +8,8 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  # Write: the GitHub release (tags only).
+  contents: write
   packages: write
   # Build provenance of the published chart (tags only), next to it in GHCR.
   id-token: write
@@ -21,6 +22,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The release notes read the commits since the previous tag.
+          fetch-depth: 0
 
       - name: Set up tools
         uses: jdx/mise-action@v5
@@ -31,9 +35,10 @@ jobs:
           helm template echophase charts/echophase \
             --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x > /dev/null
 
-      # A tag vX.Y.Z publishes oci://ghcr.io/echophase-project/charts/echophase:X.Y.Z.
-      # The tag must match Chart.yaml's version, so a published version always
-      # equals the chart in that commit.
+      # A tag vX.Y.Z publishes oci://ghcr.io/echophase-project/charts/echophase:X.Y.Z,
+      # then a GitHub release with the packaged chart and notes from the
+      # commits since the last tag. The tag must match Chart.yaml's version, so
+      # a published version always equals the chart in that commit.
       - name: Publish
         id: publish
         if: startsWith(github.ref, 'refs/tags/v')
@@ -60,3 +65,27 @@ jobs:
           subject-name: ghcr.io/echophase-project/charts/echophase
           subject-digest: ${{ steps.publish.outputs.digest }}
           push-to-registry: true
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          app_version=$(awk -F'"' '/^appVersion:/{print $2}' charts/echophase/Chart.yaml)
+          {
+            echo "Runs EchoPhase $app_version (server and webapp images of that version) unless values set others."
+            echo
+            scripts/release-notes.sh "$GITHUB_REF_NAME"
+            echo
+            echo "### Install"
+            echo
+            echo '```sh'
+            echo "helm install echophase oci://ghcr.io/echophase-project/charts/echophase --version $version \\"
+            echo "  --namespace echophase --create-namespace \\"
+            echo "  --set secrets.POSTGRES_PASSWORD=change-me --set secrets.VALKEY_PASSWORD=change-me"
+            echo '```'
+          } > release-notes.md
+          gh release create "$GITHUB_REF_NAME" --verify-tag \
+            --title "EchoPhase chart $version" --notes-file release-notes.md \
+            "dist/echophase-$version.tgz"
