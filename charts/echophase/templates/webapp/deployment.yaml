@@ -25,6 +25,10 @@ spec:
         # The webapp's nginx proxies /api (the realtime gateway included) here.
         - name: API_UPSTREAM
           value: "{{ include "echophase.fullname" . }}:{{ .Values.echophase.service.port }}"
+        {{- range $name, $value := .Values.webapp.extraEnv }}
+        - name: {{ $name }}
+          value: {{ tpl (toString $value) $ | quote }}
+        {{- end }}
         # Keep serving while the pod is taken out of the Service's endpoints;
         # without the pause, requests routed to it in that window time out.
         lifecycle:

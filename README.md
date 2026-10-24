@@ -18,8 +18,8 @@ chart's `appVersion`, plus Postgres, ScyllaDB and Valkey. Passwords have no
 defaults; keep them in a values file of your own (see
 `charts/echophase/secrets.example.yaml`) or a secret manager. Other settings:
 `charts/echophase/values.yaml` (ingress host and controller, resources,
-persistence, rate limits, `echophase.extraEnv` for more server settings such as
-OpenTelemetry endpoints).
+persistence, rate limits, `echophase.extraEnv` and `webapp.extraEnv` for more settings of the server
+and the webapp, such as OpenTelemetry endpoints or error reporting).
 
 To run images from another registry (your own builds), set `imageRegistry`
 and the components' `image.repository` / `image.tag`.

@@ -82,6 +82,14 @@ webapp:
 
   replicas: 1
 
+  # More environment variables of the webapp's nginx (not secrets), e.g. where
+  # browser errors go (see the webapp's README):
+  #   SENTRY_DSN: http://<key>@glitchtip.monitoring.svc/2
+  #   ERRORS_UPSTREAM: glitchtip.monitoring.svc.cluster.local:80
+  #   ERRORS_PROJECT: "2"
+  # Values are templates ("{{ .Release.Name }}").
+  extraEnv: {}
+
   service:
     type: LoadBalancer
     port: 80
