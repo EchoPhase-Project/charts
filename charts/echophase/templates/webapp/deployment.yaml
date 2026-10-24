@@ -22,7 +22,7 @@ spec:
         image: {{ include "echophase.image" (list $ .Values.webapp.image) | quote }}
         imagePullPolicy: {{ include "echophase.appImagePullPolicy" (list $ .Values.webapp.image) }}
         env:
-        # The webapp's nginx proxies /api and /gateway here.
+        # The webapp's nginx proxies /api (the realtime gateway included) here.
         - name: API_UPSTREAM
           value: "{{ include "echophase.fullname" . }}:{{ .Values.echophase.service.port }}"
         # Keep serving while the pod is taken out of the Service's endpoints;

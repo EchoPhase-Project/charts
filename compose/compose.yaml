@@ -4,8 +4,8 @@
 #   docker compose up -d     # then http://localhost:8080
 #
 # The same images and settings as the Helm chart. Only the webapp is published,
-# on 127.0.0.1 (set WEBAPP_PORT / WEBAPP_BIND to change); it proxies /api and
-# /gateway to the server.
+# on 127.0.0.1 (set WEBAPP_PORT / WEBAPP_BIND to change); it proxies /api
+# (the realtime gateway included) to the server.
 name: echophase
 
 x-server-env: &server-env
