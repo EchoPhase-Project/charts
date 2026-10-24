@@ -47,6 +47,8 @@ jobs:
             exit 1
           fi
           echo "$GH_TOKEN" | helm registry login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          # The provenance step pushes its attestation with Docker's credentials.
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           helm package charts/echophase --destination dist
           helm push "dist/echophase-$version.tgz" oci://ghcr.io/echophase-project/charts 2>&1 | tee push.log
           echo "digest=$(awk '/^Digest:/{print $2}' push.log)" >> "$GITHUB_OUTPUT"
