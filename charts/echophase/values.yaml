@@ -256,8 +256,9 @@ networkPolicy:
   enabled: false
 
 # Credentials, rendered into the <release>-secrets Secret. Passwords have no
-# defaults: put them in helm/secrets.yaml (gitignored; copy
-# secrets.example.yaml), which `mise run helm:*` passes when it exists.
+# defaults: put them in a values file of your own (copy secrets.example.yaml
+# to secrets.yaml, which is gitignored, and pass it with -f) or a secret
+# manager.
 secrets:
   POSTGRES_USER: echophase
   POSTGRES_DB: echophase
