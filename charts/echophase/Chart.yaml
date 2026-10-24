@@ -2,9 +2,9 @@ apiVersion: v2
 name: echophase
 description: EchoPhase application Helm chart
 type: application
-version: 0.3.0
+version: 0.4.0
 # Image tag of server and webapp unless values set one.
-appVersion: "0.1.0"
+appVersion: "0.2.0"
 keywords:
   - echophase
   - postgres

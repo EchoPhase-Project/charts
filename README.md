@@ -8,7 +8,7 @@ The chart is published as an OCI package:
 
 ```sh
 helm install echophase oci://ghcr.io/echophase-project/charts/echophase \
-  --version 0.1.0 --namespace echophase --create-namespace \
+  --version 0.4.0 --namespace echophase --create-namespace \
   --set secrets.POSTGRES_PASSWORD=change-me \
   --set secrets.VALKEY_PASSWORD=change-me
 ```
