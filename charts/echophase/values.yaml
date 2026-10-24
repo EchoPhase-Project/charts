@@ -64,6 +64,13 @@ echophase:
     VALKEY_HOST: "{{ .Release.Name }}-valkey"
     VALKEY_PORT: "6379"
 
+  # More environment variables of the server (not secrets: they go into a
+  # ConfigMap), e.g. where OpenTelemetry sends traces and metrics:
+  #   OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  #   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://tempo.monitoring:4318/v1/traces
+  # Values are templates ("{{ .Release.Name }}").
+  extraEnv: {}
+
 # EchoPhase webapp (SolidJS + nginx)
 webapp:
   image:

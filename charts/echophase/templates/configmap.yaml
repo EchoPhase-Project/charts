@@ -23,3 +23,10 @@ data:
   SCYLLA_KEYSPACE: {{ .Values.scylla.keyspace | quote }}
   # The chart deploys a single-node Scylla, so the app may create its keyspace.
   SCYLLA_AUTO_CREATE_KEYSPACE: {{ .Values.scylla.autoCreateKeyspace | quote }}
+  {{- with .Values.echophase.extraEnv }}
+
+  # echophase.extraEnv
+  {{- range $name, $value := . }}
+  {{ $name }}: {{ tpl (toString $value) $ | quote }}
+  {{- end }}
+  {{- end }}
