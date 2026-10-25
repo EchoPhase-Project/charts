@@ -36,6 +36,10 @@ postgres:
   external:
     host: postgres.example.internal
     port: 5432
+    sslMode: VerifyFull         # or Require, Prefer (default), Disable...
+    caCertificate:              # the CA VerifyFull checks the database against;
+      secretName: postgres-ca   # leave secretName empty for a publicly signed one
+      key: ca.crt
 valkey:
   enabled: false
   external:
@@ -59,7 +63,10 @@ secrets:
 ```
 
 Each can be chosen on its own. The server waits for each database before it
-starts and applies its migrations to them.
+starts and applies its migrations to them. The CA certificate's Secret is
+yours, in the release's namespace (for example
+`kubectl create secret generic postgres-ca --from-file=ca.crt=<bundle>`).
+TLS to an external ScyllaDB is not supported yet.
 
 ## GitOps (Flux)
 

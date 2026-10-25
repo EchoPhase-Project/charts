@@ -103,6 +103,12 @@ spec:
             name: {{ include "echophase.fullname" . }}-config
         - secretRef:
             name: {{ include "echophase.fullname" . }}-secrets
+        {{- if include "echophase.postgresCa" . }}
+        volumeMounts:
+        - name: postgres-ca
+          mountPath: /etc/echophase/postgres-ca
+          readOnly: true
+        {{- end }}
         resources:
           {{- toYaml .Values.migrate.resources | nindent 10 }}
       {{- end }}
@@ -124,10 +130,17 @@ spec:
             name: {{ include "echophase.fullname" . }}-config
         - secretRef:
             name: {{ include "echophase.fullname" . }}-secrets
-        {{- if .Values.echophase.logs.enabled }}
+        {{- if or .Values.echophase.logs.enabled (include "echophase.postgresCa" .) }}
         volumeMounts:
+        {{- if .Values.echophase.logs.enabled }}
         - name: logs
           mountPath: /app/Logs
+        {{- end }}
+        {{- if include "echophase.postgresCa" . }}
+        - name: postgres-ca
+          mountPath: /etc/echophase/postgres-ca
+          readOnly: true
+        {{- end }}
         {{- end }}
         {{- if .Values.echophase.healthcheck.enabled }}
         livenessProbe:
@@ -150,9 +163,19 @@ spec:
         {{- end }}
         resources:
           {{- toYaml .Values.echophase.resources | nindent 10 }}
-      {{- if .Values.echophase.logs.enabled }}
+      {{- if or .Values.echophase.logs.enabled (include "echophase.postgresCa" .) }}
       volumes:
+      {{- if .Values.echophase.logs.enabled }}
       - name: logs
         persistentVolumeClaim:
           claimName: {{ include "echophase.fullname" . }}-logs-pvc
+      {{- end }}
+      {{- if include "echophase.postgresCa" . }}
+      - name: postgres-ca
+        secret:
+          secretName: {{ .Values.postgres.external.caCertificate.secretName }}
+          items:
+          - key: {{ .Values.postgres.external.caCertificate.key }}
+            path: {{ .Values.postgres.external.caCertificate.key }}
+      {{- end }}
       {{- end }}

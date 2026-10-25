@@ -10,6 +10,12 @@ data:
   # PostgreSQL
   POSTGRES_HOST: {{ include "echophase.postgresHost" . | quote }}
   POSTGRES_PORT: {{ include "echophase.postgresPort" . | quote }}
+  {{- with include "echophase.postgresSslMode" . }}
+  POSTGRES_SSL_MODE: {{ . | quote }}
+  {{- end }}
+  {{- if include "echophase.postgresCa" . }}
+  POSTGRES_SSL_ROOT_CERT: {{ include "echophase.postgresCaPath" . | quote }}
+  {{- end }}
   
   # Valkey
   VALKEY_HOST: {{ include "echophase.valkeyHost" . | quote }}

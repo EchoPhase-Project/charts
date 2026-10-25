@@ -155,6 +155,16 @@ postgres:
   external:
     host: ""
     port: 5432
+    # TLS: Disable, Allow, Prefer, Require, VerifyCA or VerifyFull; empty is
+    # the server's default, Prefer (encrypted when the database offers it,
+    # without checking its certificate). Needs EchoPhase 0.3.0 or later.
+    sslMode: ""
+    # The CA certificate VerifyCA and VerifyFull check the database against,
+    # from a Secret of yours in the release's namespace (empty secretName: the
+    # system's trusted CAs, enough for a publicly signed certificate).
+    caCertificate:
+      secretName: ""
+      key: ca.crt
   image:
     repository: postgres
     tag: "17"

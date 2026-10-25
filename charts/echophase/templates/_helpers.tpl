@@ -120,3 +120,26 @@ external one (<db>.external), which then must name a host.
 {{- define "echophase.scyllaPort" -}}
 {{- ternary .Values.scylla.service.port .Values.scylla.external.port .Values.scylla.enabled }}
 {{- end }}
+
+{{/*
+TLS to an external Postgres: the SSL mode (validated here, so a typo fails the
+render, not the server's start) and the CA certificate from a Secret of the
+user's, mounted into the server and migration containers.
+*/}}
+{{- define "echophase.postgresSslMode" -}}
+{{- $mode := .Values.postgres.external.sslMode -}}
+{{- if and (not .Values.postgres.enabled) $mode -}}
+{{- if not (has $mode (list "Disable" "Allow" "Prefer" "Require" "VerifyCA" "VerifyFull")) -}}
+{{- fail (printf "postgres.external.sslMode must be Disable, Allow, Prefer, Require, VerifyCA or VerifyFull, not %q" $mode) }}
+{{- end -}}
+{{- $mode }}
+{{- end }}
+{{- end }}
+
+{{- define "echophase.postgresCa" -}}
+{{- if and (not .Values.postgres.enabled) .Values.postgres.external.caCertificate.secretName }}true{{ end }}
+{{- end }}
+
+{{- define "echophase.postgresCaPath" -}}
+{{- printf "/etc/echophase/postgres-ca/%s" .Values.postgres.external.caCertificate.key }}
+{{- end }}
