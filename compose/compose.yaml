@@ -124,7 +124,7 @@ services:
 
   # EF migrations, then exits; the server starts after it succeeded.
   migrate:
-    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.3.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.4.0}
     command: ["migrate"]
     environment: *server-env
     depends_on:
@@ -133,7 +133,7 @@ services:
       valkey: { condition: service_healthy }
 
   server:
-    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.3.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${SERVER_REPOSITORY:-server}:${ECHOPHASE_VERSION:-0.4.0}
     restart: unless-stopped
     environment: *server-env
     volumes:
@@ -144,7 +144,7 @@ services:
       s3-bucket: { condition: service_completed_successfully, required: false }
 
   webapp:
-    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${WEBAPP_REPOSITORY:-webapp}:${ECHOPHASE_VERSION:-0.3.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/echophase-project}/${WEBAPP_REPOSITORY:-webapp}:${ECHOPHASE_VERSION:-0.4.0}
     restart: unless-stopped
     environment:
       API_UPSTREAM: server:8080
