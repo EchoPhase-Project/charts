@@ -14,6 +14,7 @@ defaults, so pass them to render:
 helm lint charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
 helm template echophase charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
 POSTGRES_PASSWORD=x VALKEY_PASSWORD=x docker compose -f compose/compose.yaml config   # Compose
+kubectl kustomize examples/flux   # the Flux example
 ```
 
 Before you finish: both helm commands succeed, and you have read the rendered
@@ -43,6 +44,7 @@ output of what you changed.
 - `appVersion` is the EchoPhase release the chart runs. When it changes,
   change with it `ECHOPHASE_VERSION` in `compose/compose.yaml` (three places)
   and `compose/.env.example`, and `--version` in the README's install command.
+- When `version` changes, update the `tag` in `examples/flux/chart.yaml`.
 - Do not create release tags: maintainers tag `vX.Y.Z` equal to `version`.
 
 ## Commits

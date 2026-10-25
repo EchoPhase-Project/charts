@@ -24,6 +24,14 @@ and the webapp, such as OpenTelemetry endpoints or error reporting).
 To run images from another registry (your own builds), set `imageRegistry`
 and the components' `image.repository` / `image.tag`.
 
+## GitOps (Flux)
+
+To keep the release in a Git repository of your own and let
+[Flux](https://fluxcd.io) apply it, start from
+[`examples/flux`](examples/flux): the chart pinned as an `OCIRepository`, a
+`HelmRelease` with its values, the passwords encrypted with SOPS, and the
+steps. It runs the same chart and images as `helm install`.
+
 ## Docker Compose
 
 Without Kubernetes, `compose/` runs the same images on one machine:

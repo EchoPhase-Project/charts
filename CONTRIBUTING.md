@@ -82,7 +82,8 @@ The chart has two versions (`charts/echophase/Chart.yaml`):
 When `appVersion` changes, change with it the default image tag in
 `compose/compose.yaml` (`ECHOPHASE_VERSION`, three places) and
 `compose/.env.example`, and the `--version` of the install command in the
-README.
+README. When `version` changes, the Flux example's `examples/flux/chart.yaml`
+pins it too.
 
 Releases are made by the maintainers: a commit that sets the new `version`,
 then a tag `vX.Y.Z` equal to it (CI refuses a tag that differs). The tag

@@ -34,6 +34,8 @@ jobs:
           helm lint charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
           helm template echophase charts/echophase \
             --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x > /dev/null
+          # The Flux example stays a valid kustomization.
+          kubectl kustomize examples/flux > /dev/null
 
       # A tag vX.Y.Z publishes oci://ghcr.io/echophase-project/charts/echophase:X.Y.Z,
       # then a GitHub release with the packaged chart and notes from the

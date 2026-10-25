@@ -1,0 +1,15 @@
+# The published EchoPhase chart. To upgrade, change the tag (read the
+# release notes first: https://github.com/EchoPhase-Project/charts/releases).
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: echophase-chart
+  namespace: echophase
+spec:
+  interval: 1h
+  url: oci://ghcr.io/echophase-project/charts/echophase
+  ref:
+    tag: 0.4.0
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy

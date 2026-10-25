@@ -1,0 +1,45 @@
+# EchoPhase, from the chart in chart.yaml. It runs the server and webapp images
+# of the chart's appVersion from ghcr.io/echophase-project; every value below
+# is optional except what your cluster needs (the ingress, mostly). All values:
+# https://github.com/EchoPhase-Project/charts/blob/main/charts/echophase/values.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: echophase
+  namespace: echophase
+spec:
+  interval: 10m
+  chartRef:
+    kind: OCIRepository
+    name: echophase-chart
+  install:
+    remediation:
+      retries: 2
+  upgrade:
+    remediation:
+      retries: 2
+  # Passwords (secrets.*), from the Secret of secret-values.example.yaml.
+  valuesFrom:
+    - kind: Secret
+      name: echophase-secret-values
+      valuesKey: values.yaml
+  values:
+    webapp:
+      # The Ingress publishes the site; no load balancer needed.
+      service:
+        type: ClusterIP
+      ingress:
+        enabled: true
+        host: echophase.example.com
+        # "nginx" (ingress-nginx) or "traefik" (k3s): how rate limits are set.
+        controller: nginx
+        className: ""
+        # TLS: set tls: true and, for example with cert-manager, an annotation
+        # such as cert-manager.io/cluster-issuer: letsencrypt.
+        tls: false
+        annotations: {}
+    # Optional: settings of the server the chart does not model, as
+    # environment variables (not secrets), for example OpenTelemetry:
+    # echophase:
+    #   extraEnv:
+    #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.monitoring:4318
