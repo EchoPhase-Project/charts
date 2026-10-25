@@ -41,6 +41,10 @@ Conventions:
 - **Images** of server and webapp go through `echophase.image`:
   `imageRegistry/repository:tag`, the tag falling back to the chart's
   `appVersion`. Third-party images are plain `repository:tag` values.
+- **Databases** are the release's own or external (`<db>.enabled`,
+  `<db>.external`): take their addresses from `echophase.postgresHost`,
+  `echophase.valkeyHost`, `echophase.scyllaContactPoints` and the port helpers,
+  never `<release>-postgres` written out.
 - **Settings** of the server are rendered into the ConfigMap, credentials into
   the Secret. Settings the chart does not model go through
   `echophase.extraEnv` (server) and `webapp.extraEnv` (webapp); both pass

@@ -148,6 +148,13 @@ migrate:
 # PostgreSQL
 postgres:
   enabled: true
+  # false: no Postgres in the release; the server connects to external.host
+  # instead (a managed or shared PostgreSQL). Its user, password and database
+  # are secrets.POSTGRES_USER, POSTGRES_PASSWORD and POSTGRES_DB; the database
+  # must exist, the server creates its tables (migrations).
+  external:
+    host: ""
+    port: 5432
   image:
     repository: postgres
     tag: "17"
@@ -182,6 +189,13 @@ postgres:
 # Valkey (Redis)
 valkey:
   enabled: true
+  # false: no Valkey in the release; the server connects to external.host
+  # (Valkey or Redis), with secrets.VALKEY_PASSWORD.
+  external:
+    host: ""
+    port: 6379
+    # TLS to the server (managed Redis services often require it).
+    ssl: false
   image:
     repository: valkey/valkey
     tag: latest
@@ -214,6 +228,17 @@ valkey:
 # ScyllaDB
 scylla:
   enabled: true
+  # false: no Scylla in the release; the server connects to an external
+  # ScyllaDB (or Cassandra) cluster, with secrets.SCYLLA_USERNAME and
+  # SCYLLA_PASSWORD if it requires authentication. On a real cluster, set
+  # autoCreateKeyspace: false and create the keyspace with the replication you
+  # want.
+  external:
+    # Comma-separated nodes; the driver discovers the rest.
+    contactPoints: ""
+    port: 9042
+    # The datacenter of the nodes nearest to the server (multi-DC clusters).
+    localDatacenter: ""
   image:
     repository: scylladb/scylla
     tag: latest

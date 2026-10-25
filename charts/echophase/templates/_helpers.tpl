@@ -74,3 +74,49 @@ IfNotPresent for any other (immutable) tag.
 {{- $root := index . 0 }}{{- $img := index . 1 -}}
 {{- $img.pullPolicy | default (ternary "Always" "IfNotPresent" (eq (toString ($img.tag | default $root.Chart.AppVersion)) "latest")) }}
 {{- end }}
+
+{{/*
+Where the server finds each database: the release's own (<db>.enabled) or the
+external one (<db>.external), which then must name a host.
+*/}}
+{{- define "echophase.postgresHost" -}}
+{{- if .Values.postgres.enabled -}}
+{{- printf "%s-postgres" (include "echophase.fullname" .) }}
+{{- else -}}
+{{- required "postgres.external.host is required when postgres.enabled is false" .Values.postgres.external.host }}
+{{- end }}
+{{- end }}
+
+{{- define "echophase.postgresPort" -}}
+{{- ternary .Values.postgres.service.port .Values.postgres.external.port .Values.postgres.enabled }}
+{{- end }}
+
+{{- define "echophase.valkeyHost" -}}
+{{- if .Values.valkey.enabled -}}
+{{- printf "%s-valkey" (include "echophase.fullname" .) }}
+{{- else -}}
+{{- required "valkey.external.host is required when valkey.enabled is false" .Values.valkey.external.host }}
+{{- end }}
+{{- end }}
+
+{{- define "echophase.valkeyPort" -}}
+{{- ternary .Values.valkey.service.port .Values.valkey.external.port .Values.valkey.enabled }}
+{{- end }}
+
+{{/* TLS to Valkey: only an external one may need it. */}}
+{{- define "echophase.valkeySsl" -}}
+{{- and (not .Values.valkey.enabled) .Values.valkey.external.ssl }}
+{{- end }}
+
+{{/* Comma-separated contact points of the Scylla cluster. */}}
+{{- define "echophase.scyllaContactPoints" -}}
+{{- if .Values.scylla.enabled -}}
+{{- printf "%s-scylla" (include "echophase.fullname" .) }}
+{{- else -}}
+{{- required "scylla.external.contactPoints is required when scylla.enabled is false" .Values.scylla.external.contactPoints }}
+{{- end }}
+{{- end }}
+
+{{- define "echophase.scyllaPort" -}}
+{{- ternary .Values.scylla.service.port .Values.scylla.external.port .Values.scylla.enabled }}
+{{- end }}

@@ -75,5 +75,5 @@ EchoPhase version it runs and what changed.
 - Postgres keeps the password its volume was first created with: to change it
   later, change it in the database too (`ALTER USER`), then in the Secret.
 - The databases (PostgreSQL, ScyllaDB, Valkey) run inside the release, with
-  their data on persistent volumes; the chart does not connect to external
-  ones yet.
+  their data on persistent volumes. To use external ones, see "External
+  databases" in the [charts README](../../README.md#external-databases).

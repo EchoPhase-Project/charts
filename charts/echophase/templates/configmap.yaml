@@ -8,16 +8,21 @@ data:
   ASPNETCORE_ENVIRONMENT: {{ .Values.echophase.env.ASPNETCORE_ENVIRONMENT | quote }}
   
   # PostgreSQL
-  POSTGRES_HOST: {{ printf "%s-postgres" (include "echophase.fullname" .) | quote }}
-  POSTGRES_PORT: {{ .Values.postgres.service.port | quote }}
+  POSTGRES_HOST: {{ include "echophase.postgresHost" . | quote }}
+  POSTGRES_PORT: {{ include "echophase.postgresPort" . | quote }}
   
   # Valkey
-  VALKEY_HOST: {{ printf "%s-valkey" (include "echophase.fullname" .) | quote }}
-  VALKEY_PORT: {{ .Values.valkey.service.port | quote }}
+  VALKEY_HOST: {{ include "echophase.valkeyHost" . | quote }}
+  VALKEY_PORT: {{ include "echophase.valkeyPort" . | quote }}
+  VALKEY_SSL: {{ include "echophase.valkeySsl" . | quote }}
   
   # ScyllaDB
   SCYLLA_CLUSTER_NAME: {{ .Values.scylla.clusterName | quote }}
-  SCYLLA_CONTACT_POINT: {{ printf "%s-scylla" (include "echophase.fullname" .) | quote }}
+  SCYLLA_CONTACT_POINT: {{ include "echophase.scyllaContactPoints" . | quote }}
+  Database__Scylla__Port: {{ include "echophase.scyllaPort" . | quote }}
+  {{- with (and (not .Values.scylla.enabled) .Values.scylla.external.localDatacenter) }}
+  SCYLLA_LOCAL_DC: {{ . | quote }}
+  {{- end }}
   SCYLLA_SEEDS: {{ printf "%s-scylla" (include "echophase.fullname" .) | quote }}
   SCYLLA_AUTO_BOOTSTRAP: {{ .Values.scylla.autoBootstrap | quote }}
   SCYLLA_KEYSPACE: {{ .Values.scylla.keyspace | quote }}

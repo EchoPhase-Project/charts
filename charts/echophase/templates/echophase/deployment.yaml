@@ -30,34 +30,69 @@ spec:
         command: ['sh', '-c']
         args:
         - |
-          echo "Waiting for postgres to be ready..."
-          until pg_isready -h {{ include "echophase.fullname" . }}-postgres -p 5432 -U postgres; do
+          echo "Waiting for postgres at {{ include "echophase.postgresHost" . }}:{{ include "echophase.postgresPort" . }}..."
+          until pg_isready -h {{ include "echophase.postgresHost" . | quote }} -p {{ include "echophase.postgresPort" . | quote }} -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
             echo "Postgres not ready, sleeping..."
             sleep 3
           done
           echo "Postgres is ready!"
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "echophase.fullname" . }}-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "echophase.fullname" . }}-secrets
+              key: POSTGRES_DB
       - name: wait-for-scylla
         image: cassandra:4
         command: ['sh', '-c']
+        # Any contact point answering will do; with a username set (an external
+        # cluster with authentication), cqlsh signs in.
         args:
         - |
-          echo "Waiting for scylla to be ready..."
-          until cqlsh {{ include "echophase.fullname" . }}-scylla -e "SELECT now() FROM system.local"; do
+          echo "Waiting for scylla at {{ include "echophase.scyllaContactPoints" . }}..."
+          auth=""
+          if [ -n "$SCYLLA_USERNAME" ]; then auth="-u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD"; fi
+          until for host in $(echo {{ include "echophase.scyllaContactPoints" . | quote }} | tr ',' ' '); do
+              cqlsh $auth "$host" {{ include "echophase.scyllaPort" . }} -e "SELECT now() FROM system.local" > /dev/null && break
+            done; do
             echo "Scylla not ready, sleeping..."
             sleep 3
           done
           echo "Scylla is ready!"
+        env:
+        - name: SCYLLA_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "echophase.fullname" . }}-secrets
+              key: SCYLLA_USERNAME
+        - name: SCYLLA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "echophase.fullname" . }}-secrets
+              key: SCYLLA_PASSWORD
       - name: wait-for-valkey
         image: redis:alpine
         command: ['sh', '-c']
+        # Signed in (REDISCLI_AUTH), so a PONG means usable, not just listening.
         args:
         - |
-          echo "Waiting for valkey to be ready..."
-          until redis-cli -h {{ include "echophase.fullname" . }}-valkey ping; do
+          echo "Waiting for valkey at {{ include "echophase.valkeyHost" . }}:{{ include "echophase.valkeyPort" . }}..."
+          until redis-cli -h {{ include "echophase.valkeyHost" . | quote }} -p {{ include "echophase.valkeyPort" . | quote }}{{ if eq (include "echophase.valkeySsl" .) "true" }} --tls{{ end }} ping | grep -q PONG; do
             echo "Valkey not ready, sleeping..."
             sleep 3
           done
           echo "Valkey is ready!"
+        env:
+        - name: REDISCLI_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "echophase.fullname" . }}-secrets
+              key: VALKEY_PASSWORD
       {{- if .Values.migrate.enabled }}
       - name: migrate
         image: {{ include "echophase.image" (list $ .Values.migrate.image) | quote }}

@@ -8,7 +8,7 @@ The chart is published as an OCI package:
 
 ```sh
 helm install echophase oci://ghcr.io/echophase-project/charts/echophase \
-  --version 0.4.0 --namespace echophase --create-namespace \
+  --version 0.5.0 --namespace echophase --create-namespace \
   --set secrets.POSTGRES_PASSWORD=change-me \
   --set secrets.VALKEY_PASSWORD=change-me
 ```
@@ -23,6 +23,43 @@ and the webapp, such as OpenTelemetry endpoints or error reporting).
 
 To run images from another registry (your own builds), set `imageRegistry`
 and the components' `image.repository` / `image.tag`.
+
+## External databases
+
+The release runs PostgreSQL, ScyllaDB and Valkey itself by default. To use
+your own (a managed PostgreSQL, a shared Redis, an existing Scylla or
+Cassandra cluster), turn the database off and say where yours is:
+
+```yaml
+postgres:
+  enabled: false
+  external:
+    host: postgres.example.internal
+    port: 5432
+valkey:
+  enabled: false
+  external:
+    host: redis.example.internal
+    port: 6379
+    ssl: true
+scylla:
+  enabled: false
+  autoCreateKeyspace: false   # create the keyspace yourself, with your replication
+  external:
+    contactPoints: scylla-1.example.internal,scylla-2.example.internal
+    port: 9042
+    localDatacenter: dc1
+secrets:
+  POSTGRES_USER: echophase
+  POSTGRES_DB: echophase       # must exist; the server creates its tables
+  POSTGRES_PASSWORD: change-me
+  VALKEY_PASSWORD: change-me
+  SCYLLA_USERNAME: echophase   # empty: no authentication
+  SCYLLA_PASSWORD: change-me
+```
+
+Each can be chosen on its own. The server waits for each database before it
+starts and applies its migrations to them.
 
 ## GitOps (Flux)
 

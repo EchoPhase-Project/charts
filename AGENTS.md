@@ -25,6 +25,9 @@ output of what you changed.
 - Names, labels and images through the helpers in `_helpers.tpl`
   (`echophase.fullname`, `echophase.labels`, `echophase.selectorLabels`,
   `echophase.image`), plus `app.kubernetes.io/component`.
+- Database addresses only through the helpers (`echophase.postgresHost`,
+  `echophase.valkeyHost`, `echophase.scyllaContactPoints`, the port helpers):
+  each database may be the release's own or external.
 - Server and webapp image tags default to `appVersion`; do not hard-code them.
 - Passwords are `required` and have no defaults. Never put a password, real or
   example, in `values.yaml`.
