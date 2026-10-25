@@ -1,5 +1,6 @@
 # Backing services for working on the server with `dotnet run`:
 #   docker compose -f compose.yaml -f compose.dev.yaml up -d postgres valkey scylla
+# (with S3: --profile s3 ... s3 s3-bucket, then S3_ENDPOINT=http://localhost:8333)
 # Publishes their ports on 127.0.0.1 only; point the server at localhost
 # (POSTGRES_HOST=localhost, VALKEY_HOST=localhost, SCYLLA_CONTACT_POINT=localhost).
 services:
@@ -9,3 +10,5 @@ services:
     ports: ["127.0.0.1:6379:6379"]
   scylla:
     ports: ["127.0.0.1:9042:9042"]
+  s3:
+    ports: ["127.0.0.1:8333:8333"]

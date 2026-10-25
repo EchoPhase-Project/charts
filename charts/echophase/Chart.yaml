@@ -2,7 +2,7 @@ apiVersion: v2
 name: echophase
 description: EchoPhase application Helm chart
 type: application
-version: 0.5.0
+version: 0.6.0
 # Image tag of server and webapp unless values set one.
 appVersion: "0.3.0"
 keywords:

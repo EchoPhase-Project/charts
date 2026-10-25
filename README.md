@@ -68,6 +68,38 @@ yours, in the release's namespace (for example
 `kubectl create secret generic postgres-ca --from-file=ca.crt=<bundle>`).
 TLS to an external ScyllaDB is not supported yet.
 
+## Object storage (S3)
+
+For files, the server can use object storage, off by default. Either the
+release runs [SeaweedFS](https://github.com/seaweedfs/seaweedfs) and creates
+the bucket:
+
+```yaml
+s3:
+  enabled: true
+  bucket: echophase
+secrets:
+  S3_ACCESS_KEY_ID: change-me
+  S3_SECRET_ACCESS_KEY: change-me
+```
+
+or the server uses an S3 of yours (AWS S3, Cloudflare R2, Garage, Ceph RGW...),
+whose bucket you create beforehand:
+
+```yaml
+s3:
+  bucket: echophase
+  region: eu-central-1
+  external:
+    endpoint: https://s3.eu-central-1.amazonaws.com
+    forcePathStyle: false      # true for most self-hosted S3 servers
+secrets:
+  S3_ACCESS_KEY_ID: …
+  S3_SECRET_ACCESS_KEY: …
+```
+
+With Docker Compose: the `s3` profile runs SeaweedFS (see `compose/.env.example`).
+
 ## GitOps (Flux)
 
 To keep the release in a Git repository of your own and let

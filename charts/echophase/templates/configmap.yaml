@@ -34,6 +34,14 @@ data:
   SCYLLA_KEYSPACE: {{ .Values.scylla.keyspace | quote }}
   # The chart deploys a single-node Scylla, so the app may create its keyspace.
   SCYLLA_AUTO_CREATE_KEYSPACE: {{ .Values.scylla.autoCreateKeyspace | quote }}
+  {{- if include "echophase.s3" . }}
+
+  # Object storage (S3)
+  S3_ENDPOINT: {{ include "echophase.s3Endpoint" . | quote }}
+  S3_REGION: {{ .Values.s3.region | quote }}
+  S3_BUCKET: {{ .Values.s3.bucket | quote }}
+  S3_FORCE_PATH_STYLE: {{ include "echophase.s3ForcePathStyle" . | quote }}
+  {{- end }}
   {{- with .Values.echophase.extraEnv }}
 
   # echophase.extraEnv

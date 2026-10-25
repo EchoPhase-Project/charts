@@ -93,6 +93,34 @@ spec:
             secretKeyRef:
               name: {{ include "echophase.fullname" . }}-secrets
               key: VALKEY_PASSWORD
+      {{- if .Values.s3.enabled }}
+      # The release's SeaweedFS: wait for its S3 gateway, then create the
+      # bucket (signed with the server's keys; "already yours" is fine). An
+      # external S3 is not waited for; its bucket is the user's to create.
+      - name: wait-for-s3
+        image: "{{ .Values.s3.image.repository }}:{{ .Values.s3.image.tag }}"
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for S3 at $S3_ENDPOINT..."
+          until curl -fsS "$S3_ENDPOINT/healthz" > /dev/null; do
+            echo "S3 not ready, sleeping..."
+            sleep 3
+          done
+          status=$(curl -sS -o /tmp/answer -w '%{http_code}' -X PUT \
+            --aws-sigv4 "aws:amz:$S3_REGION:s3" --user "$S3_ACCESS_KEY_ID:$S3_SECRET_ACCESS_KEY" \
+            "$S3_ENDPOINT/$S3_BUCKET")
+          case "$status" in
+            200) echo "Bucket $S3_BUCKET created." ;;
+            409) echo "Bucket $S3_BUCKET exists." ;;
+            *) echo "Creating bucket $S3_BUCKET failed ($status):"; cat /tmp/answer; exit 1 ;;
+          esac
+        envFrom:
+        - configMapRef:
+            name: {{ include "echophase.fullname" . }}-config
+        - secretRef:
+            name: {{ include "echophase.fullname" . }}-secrets
+      {{- end }}
       {{- if .Values.migrate.enabled }}
       - name: migrate
         image: {{ include "echophase.image" (list $ .Values.migrate.image) | quote }}

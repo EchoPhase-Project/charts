@@ -143,3 +143,24 @@ user's, mounted into the server and migration containers.
 {{- define "echophase.postgresCaPath" -}}
 {{- printf "/etc/echophase/postgres-ca/%s" .Values.postgres.external.caCertificate.key }}
 {{- end }}
+
+{{/*
+Object storage (S3): the release's own SeaweedFS (s3.enabled), an external
+S3 (s3.external.endpoint), or none. "true" when there is one.
+*/}}
+{{- define "echophase.s3" -}}
+{{- if or .Values.s3.enabled .Values.s3.external.endpoint }}true{{ end }}
+{{- end }}
+
+{{- define "echophase.s3Endpoint" -}}
+{{- if .Values.s3.enabled -}}
+{{- printf "http://%s-s3:%v" (include "echophase.fullname" .) .Values.s3.service.port }}
+{{- else -}}
+{{- .Values.s3.external.endpoint }}
+{{- end }}
+{{- end }}
+
+{{/* SeaweedFS takes path-style requests; an external S3 says what it wants. */}}
+{{- define "echophase.s3ForcePathStyle" -}}
+{{- or .Values.s3.enabled .Values.s3.external.forcePathStyle }}
+{{- end }}

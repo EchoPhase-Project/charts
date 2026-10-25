@@ -28,6 +28,8 @@ output of what you changed.
 - Database addresses only through the helpers (`echophase.postgresHost`,
   `echophase.valkeyHost`, `echophase.scyllaContactPoints`, the port helpers):
   each database may be the release's own or external.
+- Object storage the same way: `echophase.s3`, `echophase.s3Endpoint`,
+  `echophase.s3ForcePathStyle`.
 - Server and webapp image tags default to `appVersion`; do not hard-code them.
 - Passwords are `required` and have no defaults. Never put a password, real or
   example, in `values.yaml`.

@@ -1,0 +1,19 @@
+{{- if .Values.s3.enabled }}
+# SeaweedFS's S3 identities: one, the server's, with the keys of secrets.*.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "echophase.fullname" . }}-s3-config
+  labels:
+    {{- include "echophase.labels" . | nindent 4 }}
+    app.kubernetes.io/component: s3
+type: Opaque
+stringData:
+  s3.json: |
+    {{- dict "identities" (list (dict
+          "name" "echophase"
+          "credentials" (list (dict
+            "accessKey" (required "secrets.S3_ACCESS_KEY_ID is required with S3 (see charts/echophase/secrets.example.yaml)" .Values.secrets.S3_ACCESS_KEY_ID)
+            "secretKey" (required "secrets.S3_SECRET_ACCESS_KEY is required with S3 (see charts/echophase/secrets.example.yaml)" .Values.secrets.S3_SECRET_ACCESS_KEY)))
+          "actions" (list "Admin" "Read" "Write" "List" "Tagging"))) | toPrettyJson | nindent 4 }}
+{{- end }}

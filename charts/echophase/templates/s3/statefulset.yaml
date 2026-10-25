@@ -1,0 +1,95 @@
+{{- if .Values.s3.enabled }}
+# SeaweedFS in one container: master, volume server, filer and the S3 gateway.
+# The Iceberg catalog and Lance servers it would also start are off.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "echophase.fullname" . }}-s3
+  labels:
+    {{- include "echophase.labels" . | nindent 4 }}
+    app.kubernetes.io/component: s3
+spec:
+  replicas: 1
+  serviceName: {{ include "echophase.fullname" . }}-s3
+  selector:
+    matchLabels:
+      {{- include "echophase.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: s3
+  template:
+    metadata:
+      labels:
+        {{- include "echophase.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: s3
+      annotations:
+        # Restart when the identities change.
+        checksum/config: {{ include (print $.Template.BasePath "/s3/config.yaml") . | sha256sum }}
+    spec:
+      containers:
+      - name: seaweedfs
+        image: "{{ .Values.s3.image.repository }}:{{ .Values.s3.image.tag }}"
+        imagePullPolicy: {{ include "echophase.imagePullPolicy" . }}
+        args:
+        - server
+        - -dir=/data
+        - -s3
+        - -s3.port={{ .Values.s3.service.port }}
+        - -s3.config=/etc/seaweedfs/s3.json
+        - -s3.port.iceberg=0
+        - -s3.port.lance=0
+        # Small volumes, as many as the disk holds: fits a small PVC.
+        - -master.volumeSizeLimitMB={{ .Values.s3.volumeSizeLimitMB }}
+        - -volume.max=0
+        ports:
+        - containerPort: {{ .Values.s3.service.port }}
+          name: s3
+        volumeMounts:
+        - name: s3-data
+          mountPath: /data
+        - name: s3-config
+          mountPath: /etc/seaweedfs
+          readOnly: true
+        {{- if .Values.s3.healthcheck.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: s3
+          initialDelaySeconds: {{ .Values.s3.healthcheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.s3.healthcheck.periodSeconds }}
+          timeoutSeconds: {{ .Values.s3.healthcheck.timeoutSeconds }}
+          failureThreshold: {{ .Values.s3.healthcheck.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: s3
+          initialDelaySeconds: {{ .Values.s3.healthcheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.s3.healthcheck.periodSeconds }}
+          timeoutSeconds: {{ .Values.s3.healthcheck.timeoutSeconds }}
+          failureThreshold: {{ .Values.s3.healthcheck.failureThreshold }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.s3.resources | nindent 10 }}
+      volumes:
+      - name: s3-config
+        secret:
+          secretName: {{ include "echophase.fullname" . }}-s3-config
+      {{- if not .Values.s3.persistence.enabled }}
+      - name: s3-data
+        emptyDir: {}
+      {{- end }}
+  {{- if .Values.s3.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: s3-data
+      annotations:
+        helm.sh/resource-policy: keep
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      {{- if .Values.s3.persistence.storageClass }}
+      storageClassName: {{ .Values.s3.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.s3.persistence.size }}
+  {{- end }}
+{{- end }}

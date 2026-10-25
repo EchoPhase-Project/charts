@@ -45,6 +45,9 @@ Conventions:
   `<db>.external`): take their addresses from `echophase.postgresHost`,
   `echophase.valkeyHost`, `echophase.scyllaContactPoints` and the port helpers,
   never `<release>-postgres` written out.
+- **Object storage** follows the same pattern (`s3.enabled`, `s3.external`):
+  `echophase.s3`, `echophase.s3Endpoint` and `echophase.s3ForcePathStyle`
+  decide what the server gets.
 - **Settings** of the server are rendered into the ConfigMap, credentials into
   the Secret. Settings the chart does not model go through
   `echophase.extraEnv` (server) and `webapp.extraEnv` (webapp); both pass
