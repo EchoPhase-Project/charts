@@ -1,14 +1,15 @@
 # AGENTS.md: EchoPhase charts
 
-Helm chart (`charts/echophase`) and Docker Compose (`compose/`) to run
-EchoPhase. Humans read [CONTRIBUTING.md](CONTRIBUTING.md); this file is the
-short version for coding agents. When the two disagree, CONTRIBUTING.md and
-the files win: fix this file.
+This repository contains the Helm chart (`charts/echophase`) and the Docker
+Compose files (`compose/`) for EchoPhase. The full rules for persons are in
+[CONTRIBUTING.md](CONTRIBUTING.md). This file is the short version for coding
+agents. If this file and CONTRIBUTING.md are different, CONTRIBUTING.md and the
+files are correct. Then correct this file.
 
 ## Commands
 
-Helm comes from mise (`mise install --locked`). The passwords have no
-defaults, so pass them to render:
+Get Helm from mise: run `mise install --locked`. The passwords do not have
+default values. Thus, give them to the commands that render the chart:
 
 ```sh
 helm lint charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
@@ -17,42 +18,61 @@ POSTGRES_PASSWORD=x VALKEY_PASSWORD=x docker compose -f compose/compose.yaml con
 kubectl kustomize examples/flux   # the Flux example
 ```
 
-Before you finish: both helm commands succeed, and you have read the rendered
-output of what you changed.
+Before you stop, do these steps:
+
+1. Make sure that the two `helm` commands are successful.
+2. Read the rendered output of the parts that you changed.
 
 ## Rules
 
-- Names, labels and images through the helpers in `_helpers.tpl`
-  (`echophase.fullname`, `echophase.labels`, `echophase.selectorLabels`,
-  `echophase.image`), plus `app.kubernetes.io/component`.
-- Database addresses only through the helpers (`echophase.postgresHost`,
-  `echophase.valkeyHost`, `echophase.scyllaContactPoints`, the port helpers):
-  each database may be the release's own or external.
-- Object storage the same way: `echophase.s3`, `echophase.s3Endpoint`,
-  `echophase.s3ForcePathStyle`.
-- Server and webapp image tags default to `appVersion`; do not hard-code them.
-- Passwords are `required` and have no defaults. Never put a password, real or
-  example, in `values.yaml`.
-- One-off settings go through `echophase.extraEnv` / `webapp.extraEnv`
-  rather than new values.
-- Migrations run in the server's init container; do not add Jobs or hooks.
-- Every value in `values.yaml` has a comment saying what it is for.
-- Renaming or removing a value breaks users' values files: keep the old name
-  working, or mark the commit breaking (`feat!:`).
-- Keep Compose in step with the chart.
+### Templates
+
+- Make names, labels, and images with the helpers in `_helpers.tpl`:
+  `echophase.fullname`, `echophase.labels`, `echophase.selectorLabels`,
+  `echophase.image`. Also add `app.kubernetes.io/component`.
+- Get database addresses only from the helpers: `echophase.postgresHost`,
+  `echophase.valkeyHost`, `echophase.scyllaContactPoints`, and the port
+  helpers. Each database can be part of the release or external.
+- Get object storage settings the same way: `echophase.s3`,
+  `echophase.s3Endpoint`, `echophase.s3ForcePathStyle`.
+- The default image tags for the server and the webapp are `appVersion`. Do
+  not write these tags directly in the templates.
+- Migrations run in the init container of the server. Do not add Jobs or
+  hooks.
+
+### Values
+
+- Passwords are `required` and do not have default values. Do not put a
+  password in `values.yaml`. This rule also applies to example passwords.
+- For a setting that only some users need, use `echophase.extraEnv` or
+  `webapp.extraEnv`. Do not add a new value for it.
+- Each value in `values.yaml` must have a comment that tells its purpose.
+- If you remove a value or change its name, the values files of users stop
+  working. Keep the old name in operation, or mark the commit as incompatible
+  (`feat!:`).
+
+### Compose
+
+- Keep Compose the same as the chart.
 
 ## Versions
 
-- Any change to the chart needs a new `version` in `Chart.yaml` (published
-  versions never change). Before 1.0: minor for features and breaking value
-  changes, patch for fixes.
-- `appVersion` is the EchoPhase release the chart runs. When it changes,
-  change with it `ECHOPHASE_VERSION` in `compose/compose.yaml` (three places)
-  and `compose/.env.example`, and `--version` in the README's install command.
-- When `version` changes, update the `tag` in `examples/flux/chart.yaml`.
-- Do not create release tags: maintainers tag `vX.Y.Z` equal to `version`.
+- For each change to the chart, set a new `version` in `Chart.yaml`.
+  Published versions do not change.
+- Before version 1.0, increase the minor number for features and for
+  incompatible value changes. Increase the patch number for fixes.
+- `appVersion` is the EchoPhase release that the chart runs. When you change
+  `appVersion`, change these items to the same version:
+  - `ECHOPHASE_VERSION` in `compose/compose.yaml` (three locations).
+  - `ECHOPHASE_VERSION` in `compose/.env.example`.
+  - `--version` in the install command in the README.
+- When you change `version`, change the `tag` in `examples/flux/chart.yaml`.
+- Do not make release tags. The maintainers make the tag `vX.Y.Z`. This tag
+  is the same as `version`.
 
 ## Commits
 
-Conventional Commits, checked in CI: `feat:`, `fix:`, `docs:`, `ci:`,
-`build:`, `chore:`; `feat!:` for changes that break existing values.
+Use Conventional Commits. CI examines the commit messages.
+
+- Use these types: `feat:`, `fix:`, `docs:`, `ci:`, `build:`, `chore:`.
+- Use `feat!:` for changes that make current values files incompatible.

@@ -1,108 +1,130 @@
 # Contributing to EchoPhase charts
 
-Thank you for helping with the ways to run EchoPhase: the Helm chart in
-`charts/echophase` and Docker Compose in `compose/`. What is common to every
-repository (issues, licence, security reports) is in the
-[organisation's guide](https://github.com/EchoPhase-Project/.github/blob/main/CONTRIBUTING.md).
+Thank you for your help with the methods to run EchoPhase: the Helm chart in
+`charts/echophase` and Docker Compose in `compose/`. The rules for all
+repositories (issues, licence, security reports) are in the
+[guide of the organisation](https://github.com/EchoPhase-Project/.github/blob/main/CONTRIBUTING.md).
 
-## Setting up
+## Preparation
 
-Helm is pinned with [mise](https://mise.jdx.dev): `mise install --locked`.
+The project pins Helm with [mise](https://mise.jdx.dev). Run
+`mise install --locked`.
 
-Check every change the way CI does (the passwords have no defaults, so the
-chart does not render without them):
+Examine each change the same way as CI. The passwords do not have default
+values. Thus, the chart does not render if you do not give them:
 
 ```sh
 helm lint charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
 helm template echophase charts/echophase --set secrets.POSTGRES_PASSWORD=x,secrets.VALKEY_PASSWORD=x
 ```
 
-Read the rendered output of what you changed, not only whether it renders.
-For a real test, install into a local cluster (k3d, kind, k3s) with your own
-values file; for Compose, `docker compose config` in `compose/` shows the
-resolved file, and `docker compose up -d` runs it.
+Read the rendered output of the parts that you changed. It is not sufficient
+that the chart renders.
+
+For a full test, install the chart into a local cluster (k3d, kind, k3s) with
+your own values file. For Compose, run `docker compose config` in `compose/`
+to see the resolved file. Run `docker compose up -d` to start it.
 
 ## The chart
 
-| Template | What |
+| Template | Contents |
 |---|---|
-| `templates/_helpers.tpl` | names, labels, image references and pull policies |
-| `templates/configmap.yaml`, `secret.yaml` | settings of the server; credentials |
-| `templates/echophase/` | the server (Deployment, Service, volume) |
-| `templates/webapp/` | the web client (Deployment, Service, Ingress, rate limits) |
-| `templates/postgres/`, `scylla/`, `valkey/` | the databases (StatefulSets), each behind `<component>.enabled` |
+| `templates/_helpers.tpl` | Names, labels, image references, and pull policies |
+| `templates/configmap.yaml`, `secret.yaml` | Settings of the server; credentials |
+| `templates/echophase/` | The server (Deployment, Service, volume) |
+| `templates/webapp/` | The web client (Deployment, Service, Ingress, rate limits) |
+| `templates/postgres/`, `scylla/`, `valkey/` | The databases (StatefulSets). Each database has the switch `<component>.enabled`. |
 
-Conventions:
+### Conventions
 
-- **Names and labels** come from the helpers: `echophase.fullname` with a
-  component suffix (`-webapp`, `-postgres`), `echophase.labels` plus
-  `app.kubernetes.io/component`; selectors use `echophase.selectorLabels`
-  with the component.
-- **Images** of server and webapp go through `echophase.image`:
-  `imageRegistry/repository:tag`, the tag falling back to the chart's
-  `appVersion`. Third-party images are plain `repository:tag` values.
-- **Databases** are the release's own or external (`<db>.enabled`,
-  `<db>.external`): take their addresses from `echophase.postgresHost`,
-  `echophase.valkeyHost`, `echophase.scyllaContactPoints` and the port helpers,
-  never `<release>-postgres` written out.
-- **Object storage** follows the same pattern (`s3.enabled`, `s3.external`):
-  `echophase.s3`, `echophase.s3Endpoint` and `echophase.s3ForcePathStyle`
-  decide what the server gets.
-- **Settings** of the server are rendered into the ConfigMap, credentials into
-  the Secret. Settings the chart does not model go through
-  `echophase.extraEnv` (server) and `webapp.extraEnv` (webapp); both pass
-  through `tpl`. Prefer them over a new value for a single variable.
-- **Secrets have no defaults.** A password is `required`, with a message that
-  says where to set it. Never put a real or example password in
-  `values.yaml`.
-- **Migrations** run in an init container of the server (`migrate`), not in a
-  Job or a Helm hook: the server's EF migrations take a lock, so several pods
-  starting together are safe.
-- **Restarts on change**: the server's pods carry checksums of the ConfigMap
-  and the Secret; a template that feeds them a new source adds it there.
-- **Ingress** supports `nginx` and `traefik` (`webapp.ingress.controller`);
-  anything else fails on purpose. A new controller needs its rate-limit
-  translation.
-- **Comments**: every value in `values.yaml` says what it is for, in full
-  sentences. Keep the file readable as the chart's documentation.
-- **Compatibility**: renaming or removing a value breaks the users' values
-  files. Keep the old name working where you can, and mark the commit as
-  breaking (`feat!:`) where you cannot.
+- **Names and labels.** Get them from the helpers. Use `echophase.fullname`
+  with a component suffix (`-webapp`, `-postgres`). Use `echophase.labels`
+  and add `app.kubernetes.io/component`. For selectors, use
+  `echophase.selectorLabels` with the component.
+- **Images.** The server and webapp images go through `echophase.image`:
+  `imageRegistry/repository:tag`. If the tag is empty, the helper uses the
+  `appVersion` of the chart. Third-party images are plain `repository:tag`
+  values.
+- **Databases.** Each database is part of the release or external
+  (`<db>.enabled`, `<db>.external`). Get the addresses from
+  `echophase.postgresHost`, `echophase.valkeyHost`,
+  `echophase.scyllaContactPoints`, and the port helpers. Do not write
+  `<release>-postgres` directly.
+- **Object storage.** Object storage uses the same pattern (`s3.enabled`,
+  `s3.external`). `echophase.s3`, `echophase.s3Endpoint`, and
+  `echophase.s3ForcePathStyle` set what the server gets.
+- **Settings.** The chart renders server settings into the ConfigMap and
+  credentials into the Secret. For settings that the chart does not model,
+  use `echophase.extraEnv` (server) and `webapp.extraEnv` (webapp). The two
+  values go through `tpl`. For a single variable, use them instead of a new
+  value.
+- **Secrets have no default values.** Each password is `required`, with a
+  message that tells where to set it. Do not put a password in
+  `values.yaml`. This rule also applies to example passwords.
+- **Migrations.** Migrations run in an init container of the server
+  (`migrate`). Do not use a Job or a Helm hook for them. The EF migrations of
+  the server use a lock. Thus, it is safe when many pods start at the same
+  time.
+- **Restarts after a change.** The server pods have checksums of the
+  ConfigMap and the Secret. If a template gives a new source to the server,
+  add the checksum of that source there.
+- **Ingress.** The chart supports `nginx` and `traefik`
+  (`webapp.ingress.controller`). Other values cause an error intentionally.
+  A new controller must have its translation of the rate limits.
+- **Comments.** Each value in `values.yaml` has a comment that tells its
+  purpose, in full sentences. Keep the file readable as the documentation of
+  the chart.
+- **Compatibility.** If you remove a value or change its name, the values
+  files of users stop working. If possible, keep the old name in operation.
+  If this is not possible, mark the commit as incompatible (`feat!:`).
 
 ## Docker Compose
 
-`compose/compose.yaml` runs the same images and databases as the chart; settings
-come from `.env` (`.env.example` lists them). `compose.dev.yaml` publishes the
-databases on `127.0.0.1` to run a server from source. Keep Compose and the
-chart in step: a setting added to one usually belongs in the other.
+`compose/compose.yaml` runs the same images and databases as the chart. The
+settings come from `.env`. `.env.example` lists them. `compose.dev.yaml`
+publishes the databases on `127.0.0.1`, so that you can run a server from the
+source code.
+
+Keep Compose and the chart the same. A setting that you add to one of them
+usually also belongs in the other.
 
 ## Versions
 
-The chart has two versions (`charts/echophase/Chart.yaml`):
+The chart has two versions in `charts/echophase/Chart.yaml`:
 
-- `version`: the chart itself. Any change to the chart needs a new one, since
-  a published version never changes. Before 1.0: a new minor for features and
-  for breaking changes to values, a patch for fixes.
-- `appVersion`: the EchoPhase release (server and webapp images) the chart
-  runs by default. Raise it when a new EchoPhase release is out.
+- `version` is the version of the chart. Each change to the chart must have a
+  new `version`, because a published version does not change. Before 1.0,
+  increase the minor number for features and for incompatible changes to
+  values. Increase the patch number for fixes.
+- `appVersion` is the EchoPhase release (server and webapp images) that the
+  chart runs by default. Increase it when a new EchoPhase release is
+  available.
 
-When `appVersion` changes, change with it the default image tag in
-`compose/compose.yaml` (`ECHOPHASE_VERSION`, three places) and
-`compose/.env.example`, and the `--version` of the install command in the
-README. When `version` changes, the Flux example's `examples/flux/chart.yaml`
-pins it too.
+When you change `appVersion`, change these items to the same version:
 
-Releases are made by the maintainers: a commit that sets the new `version`,
-then a tag `vX.Y.Z` equal to it (CI refuses a tag that differs). The tag
-publishes `oci://ghcr.io/echophase-project/charts/echophase` with build
-provenance and a GitHub release whose notes come from the commits.
+- The default image tag in `compose/compose.yaml` (`ECHOPHASE_VERSION`, three
+  locations).
+- `ECHOPHASE_VERSION` in `compose/.env.example`.
+- `--version` in the install command in the README.
+
+When you change `version`, also change the pin in `examples/flux/chart.yaml`.
+
+The maintainers make the releases. First, a commit sets the new `version`.
+Then, a maintainer makes a tag `vX.Y.Z` that is the same as `version`. CI
+refuses a tag that is different. The tag publishes
+`oci://ghcr.io/echophase-project/charts/echophase` with build provenance. It
+also makes a GitHub release with notes from the commits.
 
 ## Commits and pull requests
 
-Commit messages follow Conventional Commits, checked in CI; the release notes
-are made from them. Use `feat:` for something users can now do, `fix:` for a
-template that rendered wrong, and `feat!:` (or a `BREAKING CHANGE:` footer
-saying how to update values) for a change that breaks existing values files.
+Commit messages follow Conventional Commits. CI examines them. The release
+notes come from the commit messages.
 
-In the pull request, say how you tested it: `helm template` output, an install
-on a cluster, or Compose.
+- Use `feat:` for a new thing that users can do.
+- Use `fix:` for a template that rendered incorrectly.
+- Use `feat!:` for a change that makes current values files incompatible.
+  Alternatively, add a `BREAKING CHANGE:` footer that tells how to update the
+  values.
+
+In the pull request, tell how you tested the change: `helm template` output,
+an installation on a cluster, or Compose.
